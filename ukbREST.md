@@ -127,9 +127,9 @@ as well as the right name of your `.sample` file.
 Here we are going to use the simulated data provided in the ukbREST repository under tests/data/. I've copied over the test/data into my scratch location at /scratch/han_lab/ukbrest_tests/data. You will have to change it to where your file is. 
 Remember that for the postgres connection, the username is your username for val, and the password is randomly genrated and saved in the file $POSTGRES_HOME/config/postgres-password.
 
-```
+<pre>
 singularity run -B /scratch -B **/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14**:/var/lib/genotype -B **/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14**:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load
-```
+</pre>
 
 <pre>
 singularity run -B /scratch -B //scratch/han_lab/ukbrest_tests/data/pheno2sql/example14:/var/lib/genotype -B /scratch/han_lab/ukbrest_tests/data/pheno2sql/example14:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load
