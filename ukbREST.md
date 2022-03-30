@@ -125,10 +125,17 @@ or **relatedness data**, which is provided separately in UK Biobank. This is cov
 In the command below, replace the bold text with the full path of both your phenotype and genotype folder,
 as well as the right name of your `.sample` file.
 Here we are going to use the simulated data provided in the ukbREST repository under tests/data/. I've copied over the test/data into my scratch location at /scratch/han_lab/ukbrest_tests/data. You will have to change it to where your file is. 
-Remember that for the postgres connection, the username is your username for val, and the password is randomly genrated and saved in the file $POSTGRES_HOME/config/postgres-password.
+
+
+For the postgres connection, the username is your username for val, and the password is randomly genrated and saved in the file $POSTGRES_HOME/config/postgres-password, the port is also the randomly generated port that is assigned to $POSTGRES_PORT. You will have to check the output of the postgres to find port number. look for the lines such as 
+```
+2022-03-30 11:20:18.590 PDT [19755] LOG:  listening on IPv4 address "0.0.0.0", port 44245
+2022-03-30 11:20:18.590 PDT [19755] LOG:  listening on IPv6 address "::", port 44245
+```
+Replace the bold with your own username password and port.
 
 <pre>
-singularity run -B /scratch -B <b>/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14</b>:/var/lib/genotype -B <b>/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14</b>:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load
+singularity run -B /scratch -B <b>/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14</b>:/var/lib/genotype -B <b>/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14</b>:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://<b>mha</b>n:<b>b1400ec2-15cd-4b71-8e52-3a0ca006ad31</b>@node01:<b>44245</b>/ukb" ukbrest_latest.sif --load
 </pre>
 
 <pre>
