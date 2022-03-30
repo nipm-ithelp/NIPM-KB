@@ -30,20 +30,20 @@ $ singularity pull docker://hakyimlab/ukbrest
 First set up some directories and environmental variables 
 
 ```
-mhan@node01:/scratch/han_lab$ mkdir postgres
-mhan@node01:/scratch/han_lab$ export COMMON=/scratch/han_lab
-mhan@node01:/scratch/han_lab$ export POSTGRES_HOME=$COMMON/postgres
-mhan@node01:/scratch/han_lab$ mkdir -p $POSTGRES_HOME/{config,db/data,run}
-mhan@node01:/scratch/han_lab$ uuidgen > $POSTGRES_HOME/config/postgres-password
-mhan@node01:/scratch/han_lab$ chmod 600 $POSTGRES_HOME/config/postgres-password
-mhan@node01:/scratch/han_lab$ export POSTGRES_HOME=$COMMON/postgres
-mhan@node01:/scratch/han_lab$ export POSTGRES_PASSWORD_FILE=$POSTGRES_HOME/config/postgres-password
-mhan@node01:/scratch/han_lab$ export POSTGRES_USER=$USER
-mhan@node01:/scratch/han_lab$ export POSTGRES_DB=ukb
-mhan@node01:/scratch/han_lab$ export PGDATA=$POSTGRES_HOME/db/data
-mhan@node01:/scratch/han_lab$ export POSTGRES_HOST_AUTH_METHOD=md5
-mhan@node01:/scratch/han_lab$ export POSTGRES_INITDB_ARGS="--data-checksums"
-mhan@node01:/scratch/han_lab$ export POSTGRES_PORT=$(shuf -i 2000-65000 -n 1)
+mkdir postgres
+export COMMON=/scratch/han_lab
+POSTGRES_HOME=$COMMON/postgres
+mkdir -p $POSTGRES_HOME/{config,db/data,run}
+uuidgen > $POSTGRES_HOME/config/postgres-password
+chmod 600 $POSTGRES_HOME/config/postgres-password
+export POSTGRES_HOME=$COMMON/postgres
+export POSTGRES_PASSWORD_FILE=$POSTGRES_HOME/config/postgres-password
+export POSTGRES_USER=$USER
+export POSTGRES_DB=ukb
+export PGDATA=$POSTGRES_HOME/db/data
+POSTGRES_HOST_AUTH_METHOD=md5
+POSTGRES_INITDB_ARGS="--data-checksums"
+export POSTGRES_PORT=$(shuf -i 2000-65000 -n 1)
 ```
 
 
@@ -54,15 +54,61 @@ singularity run -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/
 ```
 ```
 mhan@node01:/scratch/han_lab$ singularity run -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/var/run/postgresql -B /scratch postgres_12.sif -c "port=$POSTGRES_PORT"
+The files belonging to this database system will be owned by user "mhan".
+This user must also own the server process.
 
-PostgreSQL Database directory appears to contain a database; Skipping initialization
+The database cluster will be initialized with locale "en_US.utf8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
 
-2022-03-30 11:27:19.406 PDT [21221] LOG:  starting PostgreSQL 12.10 (Debian 12.10-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
-2022-03-30 11:27:19.406 PDT [21221] LOG:  listening on IPv4 address "0.0.0.0", port 44245
-2022-03-30 11:27:19.406 PDT [21221] LOG:  listening on IPv6 address "::", port 44245
-2022-03-30 11:27:19.409 PDT [21221] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.44245"
-2022-03-30 11:27:19.424 PDT [21252] LOG:  database system was shut down at 2022-03-30 11:25:38 PDT
-2022-03-30 11:27:19.450 PDT [21221] LOG:  database system is ready to accept connections
+Data page checksums are enabled.
+
+fixing permissions on existing directory /var/lib/postgresql/data ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+initdb: warning: enabling "trust" authentication for local connections
+You can change this by editing pg_hba.conf or using the option -A, or
+--auth-local and --auth-host, the next time you run initdb.
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+waiting for server to start....2022-03-30 11:20:18.182 PDT [19805] LOG:  starting PostgreSQL 12.10 (Debian 12.10-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+2022-03-30 11:20:18.184 PDT [19805] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2022-03-30 11:20:18.198 PDT [19806] LOG:  database system was shut down at 2022-03-30 11:20:17 PDT
+2022-03-30 11:20:18.202 PDT [19805] LOG:  database system is ready to accept connections
+ done
+server started
+CREATE DATABASE
+
+
+/usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+
+2022-03-30 11:20:18.470 PDT [19805] LOG:  received fast shutdown request
+waiting for server to shut down....2022-03-30 11:20:18.472 PDT [19805] LOG:  aborting any active transactions
+2022-03-30 11:20:18.473 PDT [19805] LOG:  background worker "logical replication launcher" (PID 19812) exited with exit code 1
+2022-03-30 11:20:18.473 PDT [19807] LOG:  shutting down
+2022-03-30 11:20:18.485 PDT [19805] LOG:  database system is shut down
+ done
+server stopped
+
+PostgreSQL init process complete; ready for start up.
+
+2022-03-30 11:20:18.588 PDT [19755] LOG:  starting PostgreSQL 12.10 (Debian 12.10-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+2022-03-30 11:20:18.590 PDT [19755] LOG:  listening on IPv4 address "0.0.0.0", port 44245
+2022-03-30 11:20:18.590 PDT [19755] LOG:  listening on IPv6 address "::", port 44245
+2022-03-30 11:20:18.592 PDT [19755] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.44245"
+2022-03-30 11:20:18.605 PDT [19833] LOG:  database system was shut down at 2022-03-30 11:20:18 PDT
+2022-03-30 11:20:18.609 PDT [19755] LOG:  database system is ready to accept connections
 ```
 
 Remember that you will have to keep this server running while you query with ukbREST.
