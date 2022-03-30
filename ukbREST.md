@@ -6,113 +6,66 @@
 # ukbREST
 
 
-**Title:** ukbREST: efficient and streamlined data access for reproducible research of large biobanks
-
-**Authors:** Milton Pividori and Hae Kyung Im
-
-**DOI:** https://doi.org/10.1093/bioinformatics/bty925
-
-*Im-Lab (http://hakyimlab.org/), Section of Genetic Medicine, Department of Medicine, The University of Chicago.*
-
-*Center for Translational Data Science (https://ctds.uchicago.edu/), The University of Chicago.*
-
-**Join our mailing list here:** https://groups.google.com/d/forum/ukbrest
-
-# Abstract
-Large biobanks, such as UK Biobank with half a million participants, are changing the scale and availability of genotypic and phenotypic data for researchers to ask fundamental questions about the biology of health and disease. The breadth of the UK Biobank data is enabling discoveries at an unprecedented pace.
-However, this size and complexity pose new challenges to investigators who need to keep the accruing data up to date, comply with potential consent changes, and efficiently and reproducibly extract subsets of the data to answer specific scientific questions.
-Here we propose a tool called ukbREST designed for the UK Biobank study (easily
-extensible to other biobanks), which allows authorized users to efficiently 
-retrieve phenotypic and genetic data. It exposes a REST API that makes data highly accessible inside a private and secure network, allowing the data specification in a human readable text format easily shareable with other researchers.
-These characteristics make ukbREST an important tool to make biobank’s valuable data more readily accessible to the research community and facilitate reproducibility of the analysis, a key aspect of science.
-
-# Architecture and setup overview
-<p align="center">
- <img src="https://github.com/hakyimlab/ukbrest/blob/master/misc/ukbrest_arch.png" alt="Setup and architecture image" width="75%"/>
-</p>
-
-# News
- * 2019-12-06: the installation steps for macOS and PostgreSQL have been updated. [Check it out!](https://github.com/hakyimlab/ukbrest/wiki/Installation-instructions)
- * 2018-11-25: fix when a dataset has a data-field already loaded. Docker image is now updated.
- Check out the [documentation](https://github.com/hakyimlab/ukbrest/wiki/Load-real-UK-Biobank-data) (Section `Duplicated data-fields`).
 
 # Installation
-You only need to install ukbREST in a server/computer; clients can connect to it and
-make queries just using standard tools like `curl`. The quickest way to get ukbREST is to use
-[our Docker image](https://hub.docker.com/r/hakyimlab/ukbrest/). So install
-[Docker](https://docs.docker.com/) and follow the steps below. Just make sure, once
-you installed Docker, that you have **enough disk space** (in macOS go to Preferences/Disk and increase the
-value). Take a look a the wiki to know the general specifications expected for a computer/server.
 
 If you just want to give ukbREST a try, and you are not a UK Biobank user, you
 can follow the [guide in the wiki](https://github.com/hakyimlab/ukbrest/wiki)
 and use our simulated data.
 
-## Step 1: Pre-process
-If you are an approved UK Biobank researcher you are probably already familiar with this.
-Once you downloaded your encrypted application files, decrypt them and convert them
-to CSV and HTML formats using `ukbconv`. Checkout the
-[Data Showcase documentation](http://biobank.ctsu.ox.ac.uk/crystal/).
 
-Copy all CSV and HTML files to a particular folder (for example, called `phenotype`).
-You will have one CSV and one HTML file per dataset, each one with a specific *Basket ID*, like
-for example the ones shown below for four different datasets with Basket IDs 1111, 2222, 3333, 4444:
-```
-$ ls -lh phenotype/*
--rw-rw-r-- 1   6.6G Jul  2 23:22 phenotype/ukb1111.csv
--rw-rw-r-- 1   6.4M Jul  2 23:19 phenotype/ukb1111.html
--rw-rw-r-- 1   2.7G Jul  2 23:20 phenotype/ukb2222.csv
--rw-rw-r-- 1   4.5M Jul  2 23:19 phenotype/ukb2222.html
--rw-rw-r-- 1  1012M Jul  2 23:22 phenotype/ukb3333.csv
--rw-rw-r-- 1   192K Jul  2 23:19 phenotype/ukb3333.html
--rw-rw-r-- 1    22G Jul  2 23:24 phenotype/ukb4444.csv
--rw-rw-r-- 1   4.1M Jul  2 23:19 phenotype/ukb4444.html
-```
-
-Make sure your phenotype CSV files do not have overlapping data-fields (use the latest
-data refresh for each basket).
-
-For the genotype data you'll also have a specific folder, for instance, called `genotype`.
-Here you have to copy your `bgen`, `bgi` (BGEN index files) and `sample` (BGEN sample) files:
-
-```
-$ ls -lh genotype/*
--rw-rw-r-- 1  114G Mar 16 09:51 genotype/ukb_imp_chr10_v3.bgen
--rw-rw-r-- 1  198M Mar 16 10:12 genotype/ukb_imp_chr10_v3.bgen.bgi
--rw-rw-r-- 1  109G Mar 16 09:52 genotype/ukb_imp_chr11_v3.bgen
--rw-rw-r-- 1  201M Mar 16 10:12 genotype/ukb_imp_chr11_v3.bgen.bgi
--rw-rw-r-- 1  109G Mar 16 09:54 genotype/ukb_imp_chr12_v3.bgen
-[...]
--rw-rw-r-- 1  9.3M Apr  6 09:41 genotype/ukb12345_imp_chr1_v3_s487395.sample
-```
 
 ## Step 2: Setup
 Here we are going to start PostgreSQL and load the phenotype data into it.
 Start Docker in your server/computer and pull the PostgreSQL and ukbREST images:
 
 ```
-$ docker pull postgres:11
+$ singularity pull docker://postgres:12
 ```
 
 ```
-$ docker pull hakyimlab/ukbrest
+$ singularity pull docker://hakyimlab/ukbrest
 ```
 
-Create a network in Docker that we'll use to connect ukbREST with PostgreSQL:
+First set up some directories and environmental variables 
 
 ```
-$ docker network create ukb
+mhan@node01:/scratch/han_lab$ mkdir postgres
+mhan@node01:/scratch/han_lab$ export COMMON=/scratch/han_lab
+mhan@node01:/scratch/han_lab$ export POSTGRES_HOME=$COMMON/postgres
+mhan@node01:/scratch/han_lab$ mkdir -p $POSTGRES_HOME/{config,db/data,run}
+mhan@node01:/scratch/han_lab$ uuidgen > $POSTGRES_HOME/config/postgres-password
+mhan@node01:/scratch/han_lab$ chmod 600 $POSTGRES_HOME/config/postgres-password
+mhan@node01:/scratch/han_lab$ export POSTGRES_HOME=$COMMON/postgres
+mhan@node01:/scratch/han_lab$ export POSTGRES_PASSWORD_FILE=$POSTGRES_HOME/config/postgres-password
+mhan@node01:/scratch/han_lab$ export POSTGRES_USER=$USER
+mhan@node01:/scratch/han_lab$ export POSTGRES_DB=ukb
+mhan@node01:/scratch/han_lab$ export PGDATA=$POSTGRES_HOME/db/data
+mhan@node01:/scratch/han_lab$ export POSTGRES_HOST_AUTH_METHOD=md5
+mhan@node01:/scratch/han_lab$ export POSTGRES_INITDB_ARGS="--data-checksums"
+mhan@node01:/scratch/han_lab$ export POSTGRES_PORT=$(shuf -i 2000-65000 -n 1)
 ```
 
-Start the PostgreSQL container (here we are using user `test` with password `test`; you should
-choose a stronger one):
+
+Start the PostgreSQL container :
 
 ```
-$ docker run -d --name pg --net ukb -p 127.0.0.1:5432:5432 \
-  -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test \
-  -e POSTGRES_DB=ukb \
-  postgres:11
+singularity run -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/var/run/postgresql -B /scratch postgres_12.sif -c "port=$POSTGRES_PORT"
 ```
+```
+mhan@node01:/scratch/han_lab$ singularity run -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/var/run/postgresql -B /scratch postgres_12.sif -c "port=$POSTGRES_PORT"
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2022-03-30 11:27:19.406 PDT [21221] LOG:  starting PostgreSQL 12.10 (Debian 12.10-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+2022-03-30 11:27:19.406 PDT [21221] LOG:  listening on IPv4 address "0.0.0.0", port 44245
+2022-03-30 11:27:19.406 PDT [21221] LOG:  listening on IPv6 address "::", port 44245
+2022-03-30 11:27:19.409 PDT [21221] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.44245"
+2022-03-30 11:27:19.424 PDT [21252] LOG:  database system was shut down at 2022-03-30 11:25:38 PDT
+2022-03-30 11:27:19.450 PDT [21221] LOG:  database system is ready to accept connections
+```
+
+Remember that you will have to keep this server running while you query with ukbREST.
 
 Keep in mind that the above command runs PostgreSQL with the default settings. That could make it work **really slow** when
 you send a query to ukbREST. See the installation instructions in the
@@ -125,40 +78,67 @@ or **relatedness data**, which is provided separately in UK Biobank. This is cov
 
 In the command below, replace the bold text with the full path of both your phenotype and genotype folder,
 as well as the right name of your `.sample` file.
+Here we are going to use the simulated data provided in the ukbREST repository under tests/data/. I've copied over the test/data into my scratch location at /scratch/han_lab/ukbrest_tests/data. You will have to change it to where your file is. 
+Remember that for the postgres connection, the username is your username for val, and the password is randomly genrated and saved in the file $POSTGRES_HOME/config/postgres-password.
+
+```
+singularity run -B /scratch -B **/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14**:/var/lib/genotype -B **/scratch/han_lab/ukbrest_tests/data/pheno2sql/example14**:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load
+```
 
 <pre>
-$ docker run --rm --net ukb \
-  -v <b>/full/path/to/genotype/folder/</b>:/var/lib/genotype \
-  -v <b>/full/path/to/phenotype/folder/</b>:/var/lib/phenotype \
-  -e UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="<b>ukb12345_imp_chr1_v3_s487395.sample</b>" \
-  -e UKBREST_DB_URI="postgresql://test:test@pg:5432/ukb" \
-  -e UKBREST_LOADING_N_JOBS=2 \
-  hakyimlab/ukbrest --load
+singularity run -B /scratch -B //scratch/han_lab/ukbrest_tests/data/pheno2sql/example14:/var/lib/genotype -B /scratch/han_lab/ukbrest_tests/data/pheno2sql/example14:/var/lib/phenotype --env UKBREST_GENOTYPE_BGEN_SAMPLE_FILE="impv2.sample" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load
+2022-03-30 11:21:00,292 - ukbrest - WARNING - UKBREST_SQL_CHUNKSIZE was not set, no chunksize for SQL queries, what can lead to memory problems.
+2022-03-30 11:21:00,292 - ukbrest - INFO - Loading phenotype data into database
+2022-03-30 11:21:00,293 - ukbrest - INFO - Working on /var/lib/phenotype/example14_00.csv
+2022-03-30 11:21:00,293 - ukbrest - INFO - Creating database tables
+2022-03-30 11:21:00,299 - ukbrest - INFO - Getting columns types
+2022-03-30 11:21:00,299 - ukbrest - INFO - Reading data types from /var/lib/phenotype/example14_00.html
+2022-03-30 11:21:00,479 - ukbrest - INFO - Table ukb_pheno_0_00 (8 columns)
+2022-03-30 11:21:00,521 - ukbrest - INFO - Writing temporary CSV files
+2022-03-30 11:21:00,705 - ukbrest - WARNING - No encodings.txt found, assuming utf-8
+2022-03-30 11:21:00,833 - ukbrest - INFO - Loading CSV files into database
+2022-03-30 11:21:01,029 - ukbrest - INFO - /scratch/tmp/ukb_pheno_0_00.csv -> ukb_pheno_0_00
+2022-03-30 11:21:01,353 - ukbrest - INFO - Working on /var/lib/phenotype/example14_01.csv
+2022-03-30 11:21:01,353 - ukbrest - INFO - Creating database tables
+2022-03-30 11:21:01,358 - ukbrest - INFO - Getting columns types
+2022-03-30 11:21:01,358 - ukbrest - INFO - Reading data types from /var/lib/phenotype/example14_01.html
+2022-03-30 11:21:01,394 - ukbrest - INFO - Table ukb_pheno_1_00 (8 columns)
+2022-03-30 11:21:01,438 - ukbrest - INFO - Writing temporary CSV files
+2022-03-30 11:21:01,623 - ukbrest - WARNING - No encodings.txt found, assuming utf-8
+2022-03-30 11:21:01,750 - ukbrest - INFO - Loading CSV files into database
+2022-03-30 11:21:01,946 - ukbrest - INFO - /scratch/tmp/ukb_pheno_1_00.csv -> ukb_pheno_1_00
+2022-03-30 11:21:02,069 - ukbrest - INFO - Loading all eids into table all_eids
+2022-03-30 11:21:02,089 - ukbrest - INFO - Loading BGEN sample file: /var/lib/genotype/impv2.sample
+2022-03-30 11:21:02,104 - ukbrest - INFO - Loading events table
+2022-03-30 11:21:02,119 - ukbrest - INFO - Creating table constraints (indexes, primary keys, etc)
+2022-03-30 11:21:02,162 - ukbrest - INFO - Vacuuming
+2022-03-30 11:21:02,328 - ukbrest - INFO - Loading finished!
+
 
 [...]
 2018-07-20 22:50:34,962 - ukbrest - INFO - Loading finished!
 </pre>
 
-Sometimes we found that the CSV file have a wrong encoding, making Python fail when reading
-the file. If ukbREST found this, you'll see an error message about **Unicode decoding error**.
-Check out [the documentation](https://github.com/hakyimlab/ukbrest/wiki/Load-real-UK-Biobank-data)
-to know how to fix it.
-
-You can also adjust the number of cores used when loading the data with the
-variable `UKBREST_LOADING_N_JOBS` (set to 2 cores in the example above).
-
-The documentation also explain the [SQL schema](https://github.com/hakyimlab/ukbrest/wiki/SQL-schema),
-so you can take full advantage of it.
 
 Once your main datasets are loaded, you only need to complete two more steps: 1) load the data-field codings and
 2) some useful SQL functions. You do this by just running two commands.
 
 To load the data-field codings, run this:
 ```
-$ docker run --rm --net ukb \
-  -e UKBREST_DB_URI="postgresql://test:test@pg:5432/ukb" \
-  hakyimlab/ukbrest --load-codings
+$ singularity run --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load-codings
+
 ```
+```
+mhan@node01:/scratch/han_lab$ singularity run --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load-codings
+2022-03-30 12:06:00,962 - ukbrest - INFO - Loading codings from /var/lib/codings
+2022-03-30 12:06:01,028 - ukbrest - INFO - Processing coding file: coding_1.tsv
+2022-03-30 12:06:01,054 - ukbrest - INFO - Processing coding file: coding_10.tsv
+2022-03-30 12:06:01,065 - ukbrest - INFO - Processing coding file: coding_100.tsv
+2022-03-30 12:06:01,072 - ukbrest - INFO - Processing coding file: coding_100001.tsv
+2022-03-30 12:06:01,079 - ukbrest - INFO - Processing coding file: coding_100002.tsv
+2022-03-30 12:06:01,087 - ukbrest - INFO - Processing coding file: coding_100003.tsv
+```
+
 This will load most of the data-field codings from the UK Biobank Data Showcase (they are in `.tsv` format in
 the [codings folder](https://github.com/hakyimlab/ukbrest/tree/master/misc/codings)). This includes, for instance,
 [data coding 19](http://biobank.ctsu.ox.ac.uk/showcase/coding.cgi?id=19), which is used for
@@ -169,20 +149,38 @@ This is covered in [the documentation](https://github.com/hakyimlab/ukbrest/wiki
 
 Finally, run this command to create some useful SQL functions you will likely use in your queries:
 ```
-$ docker run --rm --net ukb \
-  -e UKBREST_DB_URI="postgresql://test:test@pg:5432/ukb" \
-  hakyimlab/ukbrest --load-sql
+$ singularity run --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load-sql
+```
+```
+mhan@node01:/scratch/han_lab$ singularity run --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif --load-sql
+2022-03-30 12:06:35,720 - ukbrest - WARNING - UKBREST_SQL_CHUNKSIZE was not set, no chunksize for SQL queries, what can lead to memory problems.
+2022-03-30 12:06:35,878 - ukbrest - INFO - SQL file loaded successfully: /opt/utils/sql/functions.sql
 ```
 
 ## Step 3: Start
 Now you only need to start the ukbREST server:
 
 <pre>
-$ docker run --rm --net ukb -p 127.0.0.1:5000:5000 \
-  -e UKBREST_SQL_CHUNKSIZE="10000" \
-  -e UKBREST_DB_URI="postgresql://test:test@pg:5432/ukb" \
-  hakyimlab/ukbrest
+$ singularity run  -B /scratch/han_lab/ukbrest_tests/data/example01:/var/lib/genotype --env UKBREST_SQL_CHUNKSIZE="10000" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif 
 </pre>
+
+```
+mhan@node01:/scratch/han_lab$ singularity run  -B /scratch/han_lab/ukbrest_tests/data/example01:/var/lib/genotype --env UKBREST_SQL_CHUNKSIZE="10000" --env UKBREST_DB_URI="postgresql://mhan:b1400ec2-15cd-4b71-8e52-3a0ca006ad31@node01:44245/ukb" ukbrest_latest.sif 
+[2022-03-30 12:07:36 -0700] [36904] [INFO] Starting gunicorn 19.7.1
+[2022-03-30 12:07:36 -0700] [36904] [INFO] Listening at: http://0.0.0.0:5000 (36904)
+[2022-03-30 12:07:36 -0700] [36904] [INFO] Using worker: eventlet
+[2022-03-30 12:07:36 -0700] [36928] [INFO] Booting worker with pid: 36928
+[2022-03-30 12:07:36 -0700] [36929] [INFO] Booting worker with pid: 36929
+[2022-03-30 12:07:36 -0700] [36930] [INFO] Booting worker with pid: 36930
+[2022-03-30 12:07:36 -0700] [36931] [INFO] Booting worker with pid: 36931
+2022-03-30 12:07:37,242 - ukbrest - WARNING - No users file was specified, so HTTP Basic authentication is disabled.
+2022-03-30 12:07:37,242 - ukbrest - WARNING - No users file was specified, so HTTP Basic authentication is disabled.
+2022-03-30 12:07:37,251 - ukbrest - WARNING - No users file was specified, so HTTP Basic authentication is disabled.
+2022-03-30 12:07:37,253 - ukbrest - WARNING - No users file was specified, so HTTP Basic authentication is disabled.
+```
+
+
+Again, remember that you have to keep this server running as well, while you query with ukbREST.
 
 For **security reasons**, note that with these commands both the ukbREST server
 and the PostgreSQL are only reachable from your own computer/server. No one from the
@@ -198,156 +196,36 @@ Once the ukbREST is up and running, you can request any data-field using
 [different query methods](https://github.com/hakyimlab/ukbrest/wiki/Phenotype-queries).
 Column names for data-fields have this format: `c{DATA_FIELD_ID}_{INSTANCE}_{ARRAY}`.
 
-### Phenotype queries
-ukbREST lets you make queries in different ways. If you only need to access some data-fields,
-you can use standard tools like `curl` to make your query. You can also use a **YAML file** to write
-your data specification in one place and easily share it (for instance, when submitting your manuscript),
-improving reproducibility of results for others working on UK Biobank. You can also specify the output file format (for example, CSV or the format used by plink or BGENIE).
 
 #### Using the command line
 You can request a single or multiple data-fields using standard tools like `curl`:
 
-Here we request two data-fields: 
-* Data field ID 50 ([Standing height](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=50)),
-instance 0 (Initial assessment visit 2006-2010), array 0 (this field is single-valued),
-which has a column name `c50_0_0`. We rename this data-field to `height`.
-* Data field ID 21002 ([Weight](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=21002)),
-instance 2 (First repeat assessment visit 2012-13), array 0 (single-valued), which has a column
-name `c21002_2_0`. We rename it to `weight`.
 ```
-$ curl -G \
-  -HAccept:text/csv \
-  "http://127.0.0.1:5000/ukbrest/api/v1.0/phenotype" \
-  --data-urlencode "columns=c50_0_0 as height" \
-  --data-urlencode "columns=c21002_1_0 as weight" \
-  > my_data.csv
+$ curl -G -HAccept:text/csv "http://node01:5000/ukbrest/api/v1.0/phenotype" --data-urlencode "columns=c101_0_0 as variable_name"
 ```
-
-Your data will be saved in file `my_data.csv`.
-
-#### Using a YAML file
-
-You can write your data specification in a YAML file. Take a look at this real example (we don't
-show results, of course, but you can try it with your UK Biobank data):
-
 ```
-$ cat my_query.yaml
-samples_filters:
-  - c22006_0_0 = '1'
-  - eid > 0
-
-data:
-  sex: c31_0_0
-  smoking_status: >
-    coalesce(
-      nullifneg(c20116_2_0), nullifneg(c20116_1_0), nullifneg(c20116_0_0)
-    )
-  asthma:
-    case_control:
-      20002:
-        coding: 1111
-      41202:
-        coding: [J45, J450, J451, J458, J459]
-  hypertension:
-    sql:
-      1: >
-        eid in (
-          select eid from events
-          where field_id in (values(20002)) and event in (
-            select * from get_children_codings('20002', array[1081])
-          )
-        )
-      0: >
-        eid not in (
-          select eid from events
-          where field_id in (values(20002)) and event in (
-            select * from get_children_codings('20002', array[1081, 1085])
-          )
-        )
-
-$ curl -X POST \
-  -H "Accept: text/csv" \
-  -F file=@my_query.yaml \
-  -F section=data \
-  http://127.0.0.1:5000/ukbrest/api/v1.0/query \
-  > my_data.csv
+mhan@node01:~$ curl -G -HAccept:text/csv "http://node01:5000/ukbrest/api/v1.0/phenotype" --data-urlencode "columns=c101_0_0 as variable_name"
+eid,variable_name
+1000010,NA
+1000021,0.0401
+1000030,NA
+1000041,0.5632
+1000050,0.4852
+1000061,0.1192
 ```
+In this case you asked for data field 101 (instance 0 and array 0) and CSV format. You also asked to rename that column in the CSV file by variable_name.
 
-The YAML file above has two sections: `samples_filters` which is a set of filters applied to all samples
-(in the example above we are considering Caucasian specified in data-field 22006), and `data` which defines
-a data specification that will be translated to a CSV file later. You can have as many data
-specifications in one file as you want (you choose the one you want when calling `curl`). The `samples_filters` will be applied on all of them.
-
-The `data` section has four columns:
-
-* `sex`: it just select data field [31](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=31), instance 0, array 0.
-* `smoking_status`: picks the first non empty value from all instances of
-[data-field 20116](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=20116), giving priority to the
-latest data from instance 2 to instance 0. Since this data-field has
-[a coding](http://biobank.ctsu.ox.ac.uk/showcase/coding.cgi?id=90) that says that negative values are
-those that `Prefer not to answer`, we consider these values as empty using the function `nullifneg` (null if negative).
-* `asthma`: this one uses a feature for binary columns called `case_control`. Cases
-(with value `1` for this column) will include all samples that have
-self-reported asthma (data-field [20002](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=20002)
-with value `1111`, which means asthma) *or* that have an ICD10 code (hospital
-level data) that indicates asthma (`J45`, `J450`, `J451`, `J458`, `J459`). All the rest that don't meet
-this criteria are controls (with value `0` for this column).
-* `hypertension`: here we use a more advanced feature called `sql`, better suited for complex real scenarios, and also employ another feature to select children of a hierarchically organized data-field (like self-reported diseases or ICD10 codes). First, with `sql`, you can specify a column with several categorical values: `1` and `0` in this case; for each of them you can write the SQL code with the conditions. The SQL code for category `1` will contain all samples that have self-reported (data-field [20002](http://biobank.ctsu.ox.ac.uk/showcase/field.cgi?id=20002))
-any disease in the tree of cardiovascular/hypertension: this includes `hypertension`
-itself but also `essential hypertension` and `gestational hypertension/pre-eclampsia`. For this you use the `get_children_codings` SQL function, indicating the data-field (20002) and the node id of the disease of interest (`1081` for hypertension; take a look at
-[the codings for data-field 20002](http://biobank.ctsu.ox.ac.uk/showcase/coding.cgi?id=6)). In this case we are including all instances of data-field 20002. Something similar is done for category `0`, but in this case we are excluding (`eid not in...`) all individuals with any disease under parents `hypertension` (node id `1081`) and `venous thromboembolic disease` (node id `1085`). Keep in mind that function `get_children_codings` works recursively, so *all* children down in the tree will be selected. If you would like, for example, to choose *all* individuals with *any* self-reported cardiovascular disease you would use `get_children_codings('20002', array[1071])`.
-
-
-The [wiki](https://github.com/hakyimlab/ukbrest/wiki) contains a page with real examples of YAML files. We encourage you to share yours!
 
 ### Genotype queries
 
-When you started ukbREST before, you didn't specified the genotype directory. This is fine if you are planning
-to just query data-fields. If you do want to get BGEN subsets, you need to add two parameters
-when staring ukbREST:
+In this example you can query for all variants between positions 0 and 1000 in chromosome 1 (all these parameters are highlighted in bold):
 
 <pre>
-$ docker run --rm --net ukb -p 127.0.0.1:5000:5000 \
-  -v <b>/full/path/to/genotype/folder/</b>:/var/lib/genotype \
-  -e <b>UKBREST_GENOTYPE_BGEN_FILE_NAMING="ukb_imp_chr{:d}_v3.bgen"</b> \
-  -e UKBREST_SQL_CHUNKSIZE="10000" \
-  -e UKBREST_DB_URI="postgresql://test:test@pg:5432/ukb" \
-  hakyimlab/ukbrest
+$ curl -G -HAccept:application/octel-stream "http://node01:5000/ukbrest/api/v1.0/genotype/1/positions/0/1000" > test.bgen
 </pre>
 
-Look at the bold text above. You need to put your full path to the genotype folder (where both the `bgen` and
-`bgi` index files reside), and also specify the `bgen` file name template with the environmental variable
-`UKBREST_GENOTYPE_BGEN_FILE_NAMING`. The substring `{:d}` will be replaced by the chromosome number.
 
-So if you want to get a subset of the chromosome 22, let's say position from 0 to 1000, you run
-something like this:
-
-```bash
-$ curl http://localhost:5000/ukbrest/api/v1.0/genotype/22/positions/0/1000 \
-  > chr22_subset.bgen
-```
-
-With the query below, you can get a subset of the BGEN using a file specifying rsids:
-
-```bash
-$ cat rsids.txt
-rs367896724
-rs540431307
-rs555500075
-rs548419688
-rs568405545
-rs534229142
-rs537182016
-rs376342519
-rs558604819
-
-$ curl -X POST \
-  -F file=@rsids.txt \
-  http://localhost:5000/ukbrest/api/v1.0/genotype/1/rsids \
-  > chr1_subset.bgen
-```
-
-Note that in these two examples you get a `bgen` (binary) file. If you want to read it from your scripts in Python,
+Note that in this example you get a `bgen` (binary) file. If you want to read it from your scripts in Python,
 for instance, you can use a package like this one: https://github.com/limix/bgen-reader-py
 
 
