@@ -4,6 +4,7 @@
 the different versions can be found here (note these are bioconductor versions not R versions): 
 https://hub.docker.com/r/bioconductor/bioconductor_docker/tags
 
+<pre>
 mhan@node01:/scratch/han_lab$ singularity pull docker://bioconductor/bioconductor_docker:RELEASE_3_14
 INFO:    Converting OCI blobs to SIF format
 INFO:    Starting build...
@@ -48,11 +49,12 @@ Storing signatures
 INFO:    Creating SIF file...
 mhan@node01:/scratch/han_lab$ ls
 bioconductor_docker_RELEASE_3_14.sif
-
+</pre>
 
 
 2. Go into singularity container and run R
 
+<pre>
 mhan@node01:/scratch/han_lab$ singularity shell --bind /scratch bioconductor_docker_RELEASE_3_14.sif 
 Singularity> R
 
@@ -75,23 +77,26 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 >
-
+</pre>
 
 
 3. Install TwoSampleMR using their devtools command. 
 
+<pre>
 library(devtools)
 install_github("MRCIEU/TwoSampleMR")
-
+</pre>
 
 
 4. Whenever it asks for update, type enter to refuse. 
 
+<pre>
 Enter one or more numbers, or an empty line to skip updates: n
-
+</pre>
 
 5. Wait until the compilation finishes
 
+<pre>
 ......
 
 * installing *binary* package ‘MendelianRandomization’ ...
@@ -126,17 +131,17 @@ Installing package into ‘/home/mhan/R/x86_64-pc-linux-gnu-library/4.1’
 ** testing if installed package can be loaded from final location
 ** testing if installed package keeps a record of temporary installation path
 * DONE (TwoSampleMR)
-
+</pre>
 
 6. Load the library
 
-
+<pre>
 > library(TwoSampleMR)
 TwoSampleMR version 0.5.6 
 [>] New: Option to use non-European LD reference panels for clumping etc
 [>] Some studies temporarily quarantined to verify effect allele
 [>] See news(package='TwoSampleMR') and https://gwas.mrcieu.ac.uk for further details
-
+</pre>
 
 
 
