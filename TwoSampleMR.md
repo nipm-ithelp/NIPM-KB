@@ -91,7 +91,7 @@ install_github("MRCIEU/TwoSampleMR")
 4. Whenever it asks for update, type enter to refuse. 
 
 <pre>
-Enter one or more numbers, or an empty line to skip updates: n
+Enter one or more numbers, or an empty line to skip updates: 
 </pre>
 
 5. Wait until the compilation finishes
