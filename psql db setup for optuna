@@ -1,0 +1,36 @@
+singularity pull docker://postgres:12
+
+
+
+
+# setup environment
+mkdir postgres
+export COMMON=/scratch/han_lab
+POSTGRES_HOME=$COMMON/postgres
+mkdir -p $POSTGRES_HOME/{config,db/data,run}
+uuidgen > $POSTGRES_HOME/config/postgres-password
+chmod 600 $POSTGRES_HOME/config/postgres-password
+export POSTGRES_HOME=$COMMON/postgres
+export POSTGRES_PASSWORD_FILE=$POSTGRES_HOME/config/postgres-password
+export POSTGRES_USER=$USER
+export POSTGRES_DB=example
+export PGDATA=$POSTGRES_HOME/db/data
+POSTGRES_HOST_AUTH_METHOD=md5
+POSTGRES_INITDB_ARGS="--data-checksums"
+export POSTGRES_PORT=$(shuf -i 2000-65000 -n 1)
+
+# create instance
+singularity instance start --bind /scratch -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/var/run/postgresql postgres_12.sif postgresql
+
+# shell in
+singularity shell instance://postgresql
+
+
+#start postgres by running startup script /singularity
+/singularity
+
+# check password
+cat postgres/config/postgres-password 
+
+# connect
+psql -h localhost -U mhan -p 5432  -d postgres
