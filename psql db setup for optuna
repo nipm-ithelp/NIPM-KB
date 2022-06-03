@@ -29,10 +29,8 @@ singularity shell instance://pgres
 #start postgres by running startup script /singularity
 bash /singularity -c "port=$POSTGRES_PORT"
 
-# check password
-cat postgres/config/postgres-password 
 
 
 # connect
-psql -h localhost -U mhan -p 5432  -d example
+psql -h localhost -U mhan -p $POSTGRES_PORT  -d example
 
