@@ -34,3 +34,7 @@ bash /singularity -c "port=$POSTGRES_PORT"
 # connect
 psql -h localhost -U mhan -p $POSTGRES_PORT  -d example
 
+
+# use in optuna
+optuna create-study --study-name "distributed-example" --storage postgresql://mhan@localhost:$POSTGRES_PORT/example
+
