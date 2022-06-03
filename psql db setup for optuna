@@ -23,7 +23,7 @@ export POSTGRES_PORT=$(shuf -i 2000-65000 -n 1)
 singularity instance start --bind /scratch -B $POSTGRES_HOME/db:/var/lib/postgresql -B $POSTGRES_HOME/run:/var/run/postgresql postgres_12.sif pgres
 
 # shell in
-singularity shell instance://pqres
+singularity shell instance://pgres
 
 
 #start postgres by running startup script /singularity
