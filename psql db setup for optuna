@@ -27,7 +27,7 @@ singularity shell instance://pgres
 
 
 #start postgres by running startup script /singularity
-bash /singularity
+bash /singularity -c "port=$POSTGRES_PORT"
 
 # check password
 cat postgres/config/postgres-password 
