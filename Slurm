@@ -1,0 +1,7 @@
+
+Slurm staging
+https://docs.ycrc.yale.edu/data/staging/
+
+Slurm interactive
+https://wiki.rc.usf.edu/index.php/SLURM_Interactive
+
