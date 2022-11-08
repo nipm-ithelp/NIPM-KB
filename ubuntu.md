@@ -47,9 +47,7 @@ b.  As Root Type: passwd username (username=tony as example)
 
 c.  The automated steps will let you complete the task
 
-```{=html}
-<!-- -->
-```
+
 4.  Scratch Space Permissions
 
     a.  We want to create the same structure in scratch as we have for
@@ -80,9 +78,8 @@ i.  Change Permissions to only allow the user to Read/Write the folder
 
     ii. You will see: drwx\--x\-\-- 2 tony tony_lab 2 Nov 3 05:21 tony
 
-```{=html}
-<!-- -->
-```
+
+
 5.  Remote Storage Folders and Permissions
 
     a.  The same pattern is repeated for this mounted space as the
@@ -105,8 +102,8 @@ each other.
 
 A folder tree for the shared folder might look like:
 
-> ![](./ubuntu/media/image1.png){width="6.322916666666667in"
-> height="1.3083333333333333in"}
+![image1](https://user-images.githubusercontent.com/1626000/200649058-b4701c3d-f065-493c-aee6-53422d238fcf.png)
+
 
 Using the following command below we have placed the file mask 764:
 
