@@ -1,7 +1,8 @@
 # How to use any version of R on val
 
-1. Pull the latest Rocker docker container using singularity
+1. Pull the latest Rocker docker container using singularity.
 the different versions can be found here: 
+
 https://hub.docker.com/r/rocker/r-ver/tags
 
 <pre>
